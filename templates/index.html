@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detector de Edad y Género</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos adicionales para asegurar que el overlay esté oculto */
+        #loading-overlay {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        #loading-overlay.active {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Detector de Edad y Género con IA</h1>
+            <p>Sube una imagen o usa tu cámara para detectar edad y género</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" id="upload-tab">Subir Imagen</button>
+            <button class="tab-btn" id="camera-tab">Usar Cámara</button>
+        </div>
+
+        <div class="tab-content" id="upload-content">
+            <div class="upload-area" id="drop-area">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <input type="file" id="file-input" accept="image/*" hidden>
+                    <div class="upload-prompt">
+                        <p>Arrastra una imagen aquí o <span class="highlight">haz clic para seleccionar</span></p>
+                    </div>
+                </form>
+                <div class="preview-container" id="preview-container" style="display: none;">
+                    <img id="preview-image" alt="Vista previa">
+                    <button id="analyze-btn" class="btn primary-btn">Analizar Imagen</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="camera-content">
+            <div class="camera-container">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas" hidden></canvas>
+                <div class="camera-controls">
+                    <button id="start-camera" class="btn primary-btn">Iniciar Cámara</button>
+                    <button id="stop-camera" class="btn secondary-btn" disabled>Detener Cámara</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-container hidden" id="results-container">
+            <h2>Resultados</h2>
+            <div class="results-content">
+                <div class="result-image-container">
+                    <img id="result-image" alt="Imagen con resultados">
+                </div>
+                <div class="result-details">
+                    <div class="result-item">
+                        <span class="result-label">Edad:</span>
+                        <span class="result-value" id="age-result">--</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Género:</span>
+                        <span class="result-value" id="gender-result">--</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Confianza:</span>
+                        <span class="result-value" id="confidence-result">--</span>
+                    </div>
+                </div>
+            </div>
+            <button id="back-btn" class="btn secondary-btn">Volver</button>
+        </div>
+
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Analizando imagen...</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
