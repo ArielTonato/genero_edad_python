@@ -7,6 +7,7 @@ import os
 from statistics import median
 import time
 from datetime import datetime
+from pykalman import KalmanFilter
 
 app = Flask(__name__)
 
@@ -19,31 +20,41 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Buffer para promediar predicciones de la cámara
 predictions_buffer = []
-buffer_size = 15
+# Aumentar el tamaño del buffer para mayor estabilidad
+buffer_size = 30
+
+# Inicializar filtro de Kalman con una secuencia válida de observaciones
+kf = KalmanFilter(initial_state_mean=0, n_dim_obs=1)
+observations = np.array([0, 0.1, 0.2])  # Secuencia inicial de observaciones
+kf = kf.em(observations, n_iter=5)
+state_mean, state_covariance = kf.filter_update(
+    filtered_state_mean=np.array([0]),
+    filtered_state_covariance=np.array([[1]])
+)
 
 def analyze_image(img):
     """Analiza una imagen para detectar edad y género"""
     try:
         # Mejorar contraste y brillo
-        img_enhanced = cv2.convertScaleAbs(img, alpha=1.2, beta=20)
-        
-        # Analizar con DeepFace
+        img_enhanced = cv2.convertScaleAbs(img, alpha=1.3, beta=30)
+
+        # Analizar con DeepFace usando un backend más preciso
         result = DeepFace.analyze(
             img_enhanced, 
             actions=['age', 'gender'], 
-            enforce_detection=False,
-            detector_backend='opencv',
+            enforce_detection=True,  # Asegurar detección de rostros
+            detector_backend='retinaface',  # Cambiar backend a 'mtcnn'
             silent=True
         )
-        
+
         # Obtener predicciones
         age = result[0]['age']
         gender_probs = result[0]['gender']
-        
+
         # Obtener el género con mayor probabilidad
         predicted_gender = max(gender_probs, key=gender_probs.get)
         confidence = gender_probs[predicted_gender]
-        
+
         return {
             'success': True,
             'age': age,
@@ -60,63 +71,66 @@ def analyze_image(img):
 
 def process_camera_frame(frame):
     """Procesa un frame de la cámara aplicando filtros y suavizado"""
-    global predictions_buffer
-    
+    global predictions_buffer, state_mean, state_covariance
+
     # Analizar el frame
     result = analyze_image(frame)
-    
+
     if not result['success']:
         return result
-    
+
     # Agregar al buffer para suavizar predicciones
     predictions_buffer.append({
         'age': result['age'],
         'gender': result['gender'],
         'confidence': result['confidence']
     })
-    
+
     # Mantener solo las últimas predicciones
     if len(predictions_buffer) > buffer_size:
         predictions_buffer.pop(0)
-    
+
     # Calcular promedios y aplicar filtros
     if len(predictions_buffer) >= 5:  # Esperar al menos 5 predicciones
         # Filtrar valores atípicos de edad usando el método IQR
         ages = [p['age'] for p in predictions_buffer]
         ages.sort()
-        
+
         # Calcular cuartiles
         q1_index = len(ages) // 4
         q3_index = 3 * len(ages) // 4
         q1 = ages[q1_index]
         q3 = ages[q3_index]
         iqr = q3 - q1
-        
+
         # Definir límites para filtrar valores atípicos
         lower_bound = q1 - 1.5 * iqr
         upper_bound = q3 + 1.5 * iqr
-        
+
         # Filtrar edades dentro de los límites
         filtered_ages = [age for age in ages if lower_bound <= age <= upper_bound]
-        
+
         # Si después de filtrar quedan suficientes valores, usar la mediana
         if len(filtered_ages) >= 3:
             avg_age = median(filtered_ages)  # La mediana es más robusta que la media
         else:
             # Si no hay suficientes valores después de filtrar, usar todos con la mediana
             avg_age = median(ages)
-        
-        # Aplicar suavizado exponencial
-        alpha = 0.3  # Factor de suavizado
-        current_age = ages[-1]  # La predicción más reciente
-        smoothed_age = alpha * current_age + (1 - alpha) * avg_age
-        
+
+        # Aplicar filtro de Kalman para suavizar la edad
+        state_mean, state_covariance = kf.filter_update(
+            filtered_state_mean=state_mean,
+            filtered_state_covariance=state_covariance,
+            observation=np.array([avg_age])
+        )
+        smoothed_age = state_mean[0]
+
         # Determinar género más frecuente
         gender_votes = {}
         for p in predictions_buffer:
             if p['confidence'] > 70:  # Solo considerar predicciones con alta confianza
                 gender_votes[p['gender']] = gender_votes.get(p['gender'], 0) + 1
-        
+
         if gender_votes:
             final_gender = max(gender_votes, key=gender_votes.get)
             # Calcular porcentaje de confianza para el género final
@@ -125,7 +139,7 @@ def process_camera_frame(frame):
         else:
             final_gender = result['gender']
             gender_confidence = result['confidence']
-        
+
         return {
             'success': True,
             'age': int(smoothed_age),

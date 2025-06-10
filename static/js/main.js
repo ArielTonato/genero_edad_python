@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let stream = null;
     let cameraActive = false;
     let cameraAnalysisInterval = null;
+    let cameraInterval = null;
     
     // Cambio entre pestañas
     uploadTab.addEventListener('click', function() {
@@ -71,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Manejar archivos subidos por el usuario
     fileInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
+        if (this.files?.[0]) {
             previewFile(this.files[0]);
         }
     });
@@ -90,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         this.classList.remove('highlight');
         
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        if (e.dataTransfer?.files?.[0]) {
             fileInput.files = e.dataTransfer.files;
             previewFile(e.dataTransfer.files[0]);
         }
@@ -108,6 +109,9 @@ document.addEventListener('DOMContentLoaded', function() {
             previewImage.src = reader.result;
             previewContainer.style.display = 'block';
             document.querySelector('.upload-prompt').style.display = 'none';
+            
+            // Mostrar el botón 'Analizar Imagen'
+            analyzeBtn.style.display = 'block';
         };
     }
     
