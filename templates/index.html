@@ -6,19 +6,6 @@
     <title>Detector de Edad y Género</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        /* Estilos adicionales para asegurar que el overlay esté oculto */
-        #loading-overlay {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-        #loading-overlay.active {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -33,6 +20,10 @@
         </div>
 
         <div class="tab-content" id="upload-content">
+            <!-- Botón Analizar Imagen fuera de la zona de drag -->
+            <div class="analyze-button-container">
+                <button id="analyze-btn" class="btn primary-btn" style="display: none;">Analizar Imagen</button>
+            </div>
             <div class="upload-area" id="drop-area">
                 <form id="upload-form" enctype="multipart/form-data">
                     <input type="file" id="file-input" accept="image/*" hidden>
@@ -42,9 +33,9 @@
                 </form>
                 <div class="preview-container" id="preview-container" style="display: none;">
                     <img id="preview-image" alt="Vista previa">
-                    <button id="analyze-btn" class="btn primary-btn">Analizar Imagen</button>
                 </div>
             </div>
+            
         </div>
 
         <div class="tab-content hidden" id="camera-content">
@@ -58,28 +49,28 @@
             </div>
         </div>
 
-        <div class="results-container hidden" id="results-container">
+        <div class="results-container hidden" id="results-container" style="display: flex; flex-direction: column; align-items: center;">
             <h2>Resultados</h2>
-            <div class="results-content">
-                <div class="result-image-container">
-                    <img id="result-image" alt="Imagen con resultados">
+            <div class="results-content" style="display: flex; justify-content: space-between; width: 100%; max-width: 800px;">
+                <div class="result-image-container" style="flex: 1; margin-right: 20px;">
+                    <img id="result-image" alt="Resultados" style="border: 2px solid #ccc; border-radius: 10px; max-width: 100%;">
                 </div>
-                <div class="result-details">
-                    <div class="result-item">
-                        <span class="result-label">Edad:</span>
-                        <span class="result-value" id="age-result">--</span>
+                <div class="result-details" style="flex: 1; background-color: #f0f0f0; padding: 15px; border-radius: 10px;">
+                    <div class="result-item" style="margin-bottom: 10px;">
+                        <span class="result-label" style="font-weight: bold; color: #555;">Edad:</span>
+                        <span class="result-value" id="age-result" style="color: #333;">--</span>
                     </div>
-                    <div class="result-item">
-                        <span class="result-label">Género:</span>
-                        <span class="result-value" id="gender-result">--</span>
+                    <div class="result-item" style="margin-bottom: 10px;">
+                        <span class="result-label" style="font-weight: bold; color: #555;">Género:</span>
+                        <span class="result-value" id="gender-result" style="color: #333;">--</span>
                     </div>
-                    <div class="result-item">
-                        <span class="result-label">Confianza:</span>
-                        <span class="result-value" id="confidence-result">--</span>
+                    <div class="result-item" style="margin-bottom: 10px;">
+                        <span class="result-label" style="font-weight: bold; color: #555;">Confianza:</span>
+                        <span class="result-value" id="confidence-result" style="color: #333;">--</span>
                     </div>
                 </div>
             </div>
-            <button id="back-btn" class="btn secondary-btn">Volver</button>
+            <button id="back-btn" class="btn secondary-btn" style="margin-top: 20px; align-self: center;">Volver</button>
         </div>
 
         <div id="loading-overlay" class="loading-overlay">
