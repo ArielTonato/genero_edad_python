@@ -112,36 +112,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Analizar imagen subida
-    analyzeBtn.addEventListener('click', function() {
-        if (previewImage.src) {
-            // Mostrar overlay de carga
-            loadingOverlay.classList.add('active');
-            
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Ocultar overlay de carga
-                loadingOverlay.classList.remove('active');
-                
-                if (data.success) {
-                    showResults(data);
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                // Ocultar overlay de carga en caso de error
-                loadingOverlay.classList.remove('active');
-                alert('Error al procesar la imagen: ' + error);
-            });
-        }
-    });
+    // Actualización del evento de análisis
+analyzeBtn.addEventListener('click', function(e) {
+    e.stopPropagation(); // Previene la propagación del evento
+    
+    if (previewImage.src && fileInput.files[0]) {
+        loadingOverlay.classList.add('active');
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingOverlay.classList.remove('active');
+            if (data.success) showResults(data);
+            else alert('Error: ' + data.error);
+        })
+        .catch(error => {
+            loadingOverlay.classList.remove('active');
+            alert('Error: ' + error);
+        });
+    } else {
+        alert('Por favor selecciona una imagen primero');
+    }
+});
     
     // Mostrar resultados
     function showResults(data) {
